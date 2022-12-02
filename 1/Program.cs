@@ -12,3 +12,7 @@ foreach (string line in System.IO.File.ReadLines(@"./input1")) {
 
 int max = elves.Max(x => x.Sum());
 Console.WriteLine(max);
+
+var sums = elves.Select(x => x.Sum()).OrderDescending().Take(3);
+Console.WriteLine($"{string.Join(',', sums.ToArray())}");
+Console.WriteLine(sums.Sum());
