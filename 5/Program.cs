@@ -19,7 +19,7 @@ foreach (string line in System.IO.File.ReadLines(@"./input")) {
     }
 
     if (parsingInstructions) {
-        ParseInstruction(line, stacks);
+        ParseInstruction(line, stacks, true);
         continue;
     }
 
@@ -47,14 +47,25 @@ Stack<char> ReverseStack(Stack<char> stack) {
     return ret;
 }
 
-void ParseInstruction(string line, List<Stack<char>> stacks)
+void ParseInstruction(string line, List<Stack<char>> stacks, bool part2)
 {
     // move n from a to b
     var splitline = line.Split();
     var (n, a, b) = (splitline[1], splitline[3], splitline[5]);
 
-    foreach (var _ in Enumerable.Range(0, int.Parse(n))) {
-        stacks[int.Parse(b) - 1].Push(stacks[int.Parse(a) - 1].Pop());
+    if (!part2) {
+        foreach (var _ in Enumerable.Range(0, int.Parse(n))) {
+            stacks[int.Parse(b) - 1].Push(stacks[int.Parse(a) - 1].Pop());
+        }
+    } else {
+        Stack<char> temp = new Stack<char>();
+        foreach (var _ in Enumerable.Range(0, int.Parse(n))) {
+            temp.Push(stacks[int.Parse(a) - 1].Pop());
+        }
+
+        foreach (var c in temp) {
+            stacks[int.Parse(b) - 1].Push(c);
+        }
     }
 }
 
