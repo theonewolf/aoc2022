@@ -80,13 +80,30 @@ foreach (var (path, (isdir, size)) in fileSystem) {
     }
 }
 
-var totalsize = 0;
+var totalSize = 0;
 
 foreach (var (path, size) in dirSizes) {
     Console.WriteLine($"{path} | size={size}");
     if (size <= 100000) {
-        totalsize += size;
+        totalSize += size;
     }
 }
 
-Console.WriteLine($"Size sum: {totalsize}");
+Console.WriteLine($"Size sum: {totalSize}");
+
+var diskSize = 70000000;
+var free = diskSize - dirSizes["/"];
+var targetFree = 30000000 - free;
+var potentialDelete = int.MaxValue;
+var potentialDeletePath = "";
+
+foreach (var (path, size) in dirSizes) {
+    if (size >= targetFree) {
+        if (size < potentialDelete) {
+            potentialDelete = size;
+            potentialDeletePath = path;
+        }
+    }
+}
+
+Console.WriteLine($"Minimal size to delete: {potentialDelete} ({potentialDeletePath})");
