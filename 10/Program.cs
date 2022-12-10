@@ -5,6 +5,7 @@ int signal_strength = 0;
 int target_cycle = 20;
 
 List<List<char>> crt_screen = new List<List<char>>();
+ClearScreen();
 
 foreach (string line in System.IO.File.ReadLines(@"./input")) {
     var splitline = line.Split();
@@ -20,14 +21,27 @@ foreach (string line in System.IO.File.ReadLines(@"./input")) {
 void ClearScreen() {
     crt_screen.Clear();
 
-    foreach (var _ in Enumerable.Range(0, 6) {
+    foreach (var _ in Enumerable.Range(0, 6)) {
             var row = new List<char>();
-            crt_screen.Add(new List<char>());
+            crt_screen.Add(row);
 
             foreach (var __ in Enumerable.Range(0, 40)) {
                 row.Add('.');
             }
     }
+}
+
+void DrawPixel() {
+    var crt_row = (cycle_count % 240) / 40;
+    var crt_col = cycle_count % 40;
+
+    if (register_x - 1 == crt_col || 
+        register_x == crt_col ||
+        register_x + 1 == crt_col) {
+            crt_screen[crt_row][crt_col] = '#';
+        } else {
+            crt_screen[crt_row][crt_col] = '.';
+        }
 }
 
 void PrintScreen() {
@@ -44,8 +58,9 @@ void IncrementCounter() {
         signal_strength += cycle_count * register_x;
         target_cycle += 40;
         Console.WriteLine($"Signal Strength: {signal_strength}, Cycle Count: {cycle_count}, Register x: {register_x}");
-
     }
+
+    DrawPixel();
 
     cycle_count++;
 }
@@ -68,6 +83,4 @@ void Execute(string instruction, int arg) {
 }
 
 Console.WriteLine($"FINAL | Signal Strength: {signal_strength}, Cycle Count: {cycle_count}, Register x: {register_x}");
-
-ClearScreen();
 PrintScreen();
