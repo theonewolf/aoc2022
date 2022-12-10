@@ -32,8 +32,8 @@ void ClearScreen() {
 }
 
 void DrawPixel() {
-    var crt_row = (cycle_count % 240) / 40;
-    var crt_col = cycle_count % 40;
+    var crt_row = ((cycle_count - 1) % 240) / 40;
+    var crt_col = (cycle_count - 1) % 40;
 
     if (register_x - 1 == crt_col || 
         register_x == crt_col ||
