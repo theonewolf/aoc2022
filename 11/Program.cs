@@ -9,9 +9,12 @@ Monkey 0:
 
 List<Monkey> monkeys = new List<Monkey>();
 Monkey monkey = new Monkey();
-monkey.Items = new List<System.Numerics.BigInteger>();
+monkey.Items = new List<ulong>();
+var divisors = new List<ulong>();
 
-foreach (string line in System.IO.File.ReadLines(@"./input")) {
+bool DEBUG = false;
+
+foreach (string line in System.IO.File.ReadLines(@"./sample_input")) {
     var trimmedline = line.Trim();
 
     if (trimmedline == "") {
@@ -21,22 +24,24 @@ foreach (string line in System.IO.File.ReadLines(@"./input")) {
     var splitline = line.Split(':');
     if (trimmedline.StartsWith("Monkey")) {
         monkey = new Monkey();
-        monkey.Items = new List<System.Numerics.BigInteger>();
+        monkey.Items = new List<ulong>();
     } else if (trimmedline.StartsWith("Starting")) {
         var valstrings = splitline[1].Split(',');
 
         foreach (var val in valstrings) {
-            monkey.Items.Add(System.Numerics.BigInteger.Parse(val));
+            monkey.Items.Add(ulong.Parse(val));
         }
     } else if (trimmedline.StartsWith("Operation")) {
         monkey.Opcode = splitline[1][11];
         if (splitline[1].Substring(13) == "old") {
-            monkey.Operand = new System.Numerics.BigInteger(-1);
+            monkey.Operand = -1;
         } else {
-            monkey.Operand = System.Numerics.BigInteger.Parse(splitline[1].Substring(13));
+            monkey.Operand = long.Parse(splitline[1].Substring(13));
+            divisors.Add((ulong) monkey.Operand);
         }
     } else if (trimmedline.StartsWith("Test")) {
-        monkey.Test = System.Numerics.BigInteger.Parse(splitline[1].Substring(14));
+        monkey.Test = ulong.Parse(splitline[1].Substring(14));
+        divisors.Add(ulong.Parse(splitline[1].Substring(14)));
     } else if (trimmedline.StartsWith("If true")) {
         monkey.TrueTarget = int.Parse(splitline[1].Substring(17));
     } else if (trimmedline.StartsWith("If false")) {
@@ -47,7 +52,7 @@ foreach (string line in System.IO.File.ReadLines(@"./input")) {
     }
 }
 
-List<int> inspections = new List<int>();
+List<long> inspections = new List<long>();
 foreach (var m in monkeys) {
     inspections.Add(0);
 }
@@ -65,26 +70,54 @@ Monkey 0:
     Current worry level is not divisible by 23.
     Item with worry level 620 is thrown to monkey 3.
 */
-void RunSimulationStep(List<Monkey> themonkeys) {
+void RunSimulationStep(List<Monkey> themonkeys, ulong divisor) {
     for (int i = 0; i < themonkeys.Count; i++) {
-        Console.WriteLine($"Monkey {i}:");
+        if (DEBUG) Console.WriteLine($"Monkey {i}:");
         var themonkey = themonkeys[i];
         for (int j = 0; j < themonkey.Items.Count; j++) {
             var item = themonkey.Items[j];
-            var operand = themonkey.Operand == new System.Numerics.BigInteger(-1) ? item : themonkey.Operand;
-            Console.WriteLine($" . Monkey inspects an item with a worry level of {item}.");
+            var operand = themonkey.Operand == -1 ? item : (ulong) themonkey.Operand;
+            if (DEBUG) Console.WriteLine($" . Monkey inspects an item with a worry level of {item}.");
             switch (themonkey.Opcode) {
                 case '+':
                     item += operand;
-                    Console.WriteLine($" .   Worry level is increases by {operand} to {item}.");
-                    item /= 3;
-                    Console.WriteLine($" .   Monkey gets bored with item. Worry level is divided by 3 to {item}.");
+                    if (DEBUG) Console.WriteLine($" .   Worry level is increases by {operand} to {item}.");
+                    if (divisor == 1) {
+                        foreach (var testDivisor in divisors) {
+                            while (item % testDivisor == 0) {
+                                if ((item / testDivisor) % testDivisor == 0) {
+                                    Console.WriteLine("Removing divisor...");
+                                    item /= testDivisor;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        Console.WriteLine($"Dividing by {divisor}");
+                        item /= divisor;
+                    }
+                    if (DEBUG) Console.WriteLine($" .   Monkey gets bored with item. Worry level is divided by 3 to {item}.");
                     break;
                 case '*':
                     item *= operand;
-                    Console.WriteLine($" .   Worry level is multiplied by {operand} to {item}.");
-                    item /= 3;
-                    Console.WriteLine($" .   Monkey gets bored with item. Worry level is divided by 3 to {item}.");
+                    if (DEBUG) Console.WriteLine($" .   Worry level is multiplied by {operand} to {item}.");
+                    if (divisor == 1) {
+                        foreach (var testDivisor in divisors) {
+                            while (item % testDivisor == 0) {
+                                if ((item / testDivisor) % testDivisor == 0) {
+                                    Console.WriteLine("Removing divisor...");
+                                    item /= testDivisor;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        Console.WriteLine($"Dividing by {divisor}");
+                        item /= divisor;
+                    }
+                    if (DEBUG) Console.WriteLine($" .   Monkey gets bored with item. Worry level is divided by 3 to {item}.");
                     break;
                 default:
                     throw new InvalidDataException();
@@ -97,13 +130,13 @@ void RunSimulationStep(List<Monkey> themonkeys) {
             if (themonkey.Items[j] % themonkey.Test == 0) {
                 var targetMonkey = themonkeys[themonkey.TrueTarget];
                 targetMonkey.Items.Add(item);
-                Console.WriteLine($" .   Current worry level is divisible by {themonkey.Test}.");
-                Console.WriteLine($" .   Item with worry level {item} is thrown to monkey {themonkey.TrueTarget}.");
+                if (DEBUG) Console.WriteLine($" .   Current worry level is divisible by {themonkey.Test}.");
+                if (DEBUG) Console.WriteLine($" .   Item with worry level {item} is thrown to monkey {themonkey.TrueTarget}.");
             } else {
                 var targetMonkey = themonkeys[themonkey.FalseTarget];
                 targetMonkey.Items.Add(item);
-                Console.WriteLine($" .   Current worry level is not divisible by {themonkey.Test}.");
-                Console.WriteLine($" .   Item with worry level {item} is thrown to monkey {themonkey.FalseTarget}.");
+                if (DEBUG) Console.WriteLine($" .   Current worry level is not divisible by {themonkey.Test}.");
+                if (DEBUG) Console.WriteLine($" .   Item with worry level {item} is thrown to monkey {themonkey.FalseTarget}.");
             }
 
             // Completed an inspection.
@@ -115,9 +148,17 @@ void RunSimulationStep(List<Monkey> themonkeys) {
     }
 }
 
-// Run 20 rounds
-foreach (var _ in Enumerable.Range(0, 20)) {
-    RunSimulationStep(monkeys);
+// Run 20 rounds or 10,000 for part 2
+// Optimization: keep it as a list of prime factors?
+foreach (var round in Enumerable.Range(0, 10000)) {
+    RunSimulationStep(monkeys, 1);
+    if (round % 100 == 0) {
+        Console.WriteLine($"Round -- {round} ({((decimal) round / 10000) * 100} percent complete)");
+    }
+}
+
+for (int i = 0; i < inspections.Count; i++) {
+    Console.WriteLine($"Monkey {i} inspected items {inspections[i]} times.");
 }
 
 inspections.Sort();
@@ -127,10 +168,10 @@ var topTwo = inspections.GetRange(0,2);
 Console.WriteLine($"Top two inspectors had {topTwo[0]} and {topTwo[1]} inspections for {topTwo[0] * topTwo[1]} monkey business.");
 
 struct Monkey {
-    public List<System.Numerics.BigInteger> Items;
+    public List<ulong> Items;
     public char Opcode;
-    public System.Numerics.BigInteger Operand;
-    public System.Numerics.BigInteger Test;
+    public long Operand;
+    public ulong Test;
     public int TrueTarget;
     public int FalseTarget;
 }
